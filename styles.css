@@ -123,4 +123,33 @@ footer{
   nav{display:none}
 }
 
+/* Back-to-Top button */
+#backToTop {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+#backToTop.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+#backToTop:hover {
+  background: #fff;
+  color: var(--accent);
+}
+
+
 
