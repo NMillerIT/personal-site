@@ -118,20 +118,31 @@
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
 
-  <button id="backToTop" aria-label="Back to top">↑</button>
+<button id="backToTop" aria-label="Back to top">↑</button>
 
 <script>
   const btn = document.getElementById('backToTop');
+  const navLinks = document.querySelectorAll('nav a');
 
-  // show button when scrolled
+  // show/hide button while scrolling
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 400) btn.classList.add('show');
-    else btn.classList.remove('show');
+    if (window.scrollY > 400) {
+      btn.classList.add('show');
+    } else {
+      btn.classList.remove('show');
+    }
   });
 
-  // smooth scroll to top
+  // smooth scroll to top on button click
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ensure button appears when any nav link is clicked (including About)
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      btn.classList.add('show');
+    });
   });
 </script>
 
@@ -147,6 +158,7 @@
   </style>
 </body>
 </html>
+
 
 
 
