@@ -1,0 +1,143 @@
+/* ===========================
+   Nate Miller - Personal Site
+   Clean, accessible, recruiter-friendly
+   ========================== */
+
+/* Theme tokens */
+:root{
+  --bg:#0e0f12;           /* near-black */
+  --surface:#171a23;      /* card background (base tone) */
+  --text:#e8eaed;         /* primary text */
+  --muted:#b8c0cc;        /* secondary text */
+  --accent:#1f9bcf;       /* deep teal/blue accent */
+  --maxw:900px;           /* readable line length */
+  --radius:14px;          /* rounded corners */
+  --shadow:0 10px 24px rgba(0,0,0,.25);
+}
+
+/* Global reset + base */
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-behavior:smooth}
+
+/* Full-page, fixed background with gradient + grid */
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    /* Base gradient (dominant layer) */
+    linear-gradient(160deg, #0e1017 0%, #0b121a 50%, #0a0f16 100%),
+    /* Subtle vignette for focus */
+    radial-gradient(150% 150% at 50% 0%, rgba(255,255,255,.03) 0%, transparent 70%),
+    /* Vertical grid lines */
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,.02) 0px,
+      rgba(255,255,255,.02) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    /* Horizontal grid lines */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.02) 0px,
+      rgba(255,255,255,.02) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+  background-blend-mode: normal, overlay, overlay, overlay;
+  background-attachment: fixed;
+  background-size: cover;
+  color:var(--text);
+  font:16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Layout containers */
+header, main, footer{
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:1.25rem;
+}
+
+/* Skip link */
+.skip-link{
+  position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;
+}
+.skip-link:focus{
+  left:1rem; top:1rem; width:auto; height:auto;
+  background:#000; color:#fff; padding:.5rem .75rem; border-radius:.5rem;
+  outline:2px solid #fff; outline-offset:2px;
+}
+
+/* Header (centered) */
+header{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:.75rem;
+  padding-top:3rem;
+  padding-bottom:1rem;
+}
+h1{margin:.25rem 0 0; font-size:2rem}
+header p{margin:.25rem 0; color:var(--muted)}
+nav{
+  display:flex; gap:1rem; flex-wrap:wrap; margin-top:.5rem;
+  justify-content:center;
+}
+nav a{
+  color:#fff;
+  background:rgba(31,155,207,.15);
+  text-decoration:none;
+  padding:.35rem .6rem;
+  border-radius:.4rem;
+  outline:none;
+}
+nav a:hover, nav a:focus{
+  background:rgba(31,155,207,.25);
+}
+
+/* Sections as floating cards */
+section{
+  background:rgba(23,26,35,.9);       /* translucent version of --surface */
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1rem 1.25rem;
+  margin:1rem 0;
+  backdrop-filter: blur(2px);          /* subtle glass effect */
+}
+h2{
+  margin:0 0 .5rem;
+  font-size:1.25rem;
+}
+
+/* Lists and spacing */
+ul{padding-left:1.1rem; margin:.5rem 0}
+li{margin:.25rem 0}
+article + article{margin-top:.75rem}
+
+/* Links in content */
+a{color:var(--accent)}
+a:hover, a:focus{color:#fff; background:rgba(31,155,207,.15); outline:none}
+
+/* Footer */
+footer{
+  color:var(--muted);
+  text-align:center;
+  padding-bottom:3rem;
+  opacity:.9;
+}
+
+/* Responsive tweak */
+@media (min-width:740px){
+  header{flex-direction:column; align-items:center; text-align:center}
+  header p{margin:0}
+}
+
+/* Print-friendly basics */
+@media print{
+  body{background:#fff; color:#000}
+  section{box-shadow:none; background:#fff; border:1px solid #ccc; backdrop-filter:none}
+  a{color:#000; text-decoration:underline; background:none}
+  nav{display:none}
+}
