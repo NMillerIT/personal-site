@@ -202,6 +202,10 @@ a:hover { text-decoration: underline; }
       <a id="bm" class="mono" href="#">Save to Tracker</a>
     </p>
     <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It tries to read title/company/location and opens this page with fields prefilled.</p>
+    <p>
+  <button id="copyBm" style="background:#fbbf24;color:#041923">Copy Bookmarklet Code</button>
+  <span class="note" id="copyNote" style="margin-left:10px"></span>
+</p>
   </div>
 
 <script>
@@ -299,7 +303,7 @@ $('clearAll').onclick = () => {
   }
 })();
 
-/* ========== Bookmarklet (LinkedIn 2025 layout) ========== */
+/* ========== Bookmarklet (LinkedIn 2025 + Firefox fix + Copy helper) ========== */
 (function makeBookmarklet(){
   const adminUrl = location.origin + location.pathname.replace(/\/admin\/.*$/,'/admin/jobs.html');
   const code = `(function(){
@@ -307,15 +311,33 @@ $('clearAll').onclick = () => {
       const title = document.querySelector('h1.top-card-layout__title, h1')?.innerText?.trim() || '';
       const company = document.querySelector('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a')?.innerText?.trim() || '';
       const location = document.querySelector('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet')?.innerText?.trim() || '';
-      const url = location.href;
+      const currentUrl = window.location?.href || document.location?.href || '';
       const q = '?pf=1&title=' + encodeURIComponent(title) + '&company=' + encodeURIComponent(company) +
-                '&location=' + encodeURIComponent(location) + '&link=' + encodeURIComponent(url);
-      window.open('${adminUrl}' + q, '_blank');
+                '&location=' + encodeURIComponent(location) + '&link=' + encodeURIComponent(currentUrl);
+      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
     } catch(e) {
       alert('Could not capture job info: ' + e.message);
     }
   })();`;
-  document.getElementById('bm').href = 'javascript:' + code.replace(/\s+/g,' ');
+
+  const minified = 'javascript:' + code.replace(/\s+/g,' ');
+  document.getElementById('bm').href = minified;
+
+  // Copy-to-clipboard support
+  const btn = document.getElementById('copyBm');
+  const note = document.getElementById('copyNote');
+  btn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(minified);
+      note.textContent = '✅ Copied! Now edit your “Save to Tracker” bookmark and paste over its URL.';
+      setTimeout(()=>note.textContent='',4000);
+    } catch {
+      note.textContent = '⚠ Clipboard not available. Copy manually from below:';
+      const pre = document.createElement('pre');
+      pre.textContent = minified;
+      btn.parentNode.appendChild(pre);
+    }
+  };
 })();
   
 </script>
