@@ -1,56 +1,7 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Job Assistant — Admin</title>
-  <!-- keep it out of search results -->
-  <meta name="robots" content="noindex,nofollow" />
-  <style>
-    body { font: 16px system-ui, -apple-system, Segoe UI, Roboto; margin: 24px; line-height: 1.45; color: #0b1220 }
-    .note { color:#6b7280; font-size: 13px; margin-bottom: 8px }
-    textarea, input, button { font: inherit }
-    textarea { width: 100%; min-height: 140px; margin: 8px 0 }
-    pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; overflow:auto }
-    .gate { padding:20px; border:1px dashed #9ca3af; border-radius:10px; max-width:520px }
-  </style>
-</head>
-<body>
-  <h1>Job Assistant (v0)</h1>
-  <p class="note">Hidden page. Not linked anywhere. Uses a simple key check via URL parameter.</p>
-
-  <!-- simple “secret key” gate (obfuscation, not security) -->
-  <div id="gate" class="gate">
-    <p><strong>Access</strong> — open with <code>?key=nmmiller1991</code> in the URL.</p>
-    <p class="note">Example: <code>https://YOUR-USERNAME.github.io/personal-site/admin/job-assistant.html?key=myKey</code></p>
-  </div>
-
-  <div id="app" style="display:none">
-    <h3>1) Paste Resume JSON</h3>
-<pre>{
-  "basics": {"name":"Your Name","email":"you@email"},
-  "skills": [{"name":"Python","keywords":["pandas","sql","fastapi"]}],
-  "experience": [{
-    "company":"Acme","title":"Data Analyst","start":"2022-03","end":"2024-08",
-    "bullets":["Built forecasting pipeline in Python","Cut SLA breaches by 32%"],
-    "skills":["Python","SQL","Tableau"]
-  }]
-}</pre>
-    <textarea id="resumeJson"></textarea>
-
-    <h3>2) Paste Job Description</h3>
-    <textarea id="jd"></textarea>
-
-    <button id="btnTailor">Tailor Resume Bullets</button>
-
-    <h3>Output</h3>
-    <pre id="out">Ready…</pre>
-  </div>
-
 <script>
   // ===== “hidden but accessible” gate =====
-  // Choose your key once; keep it in localStorage so you don't need to append it every time.
-  const MY_KEY = "pick-a-short-secret"; // <-- set this to anything you like
+  // Key required to unlock the page
+  const MY_KEY = "nmmiller1991";
   const params = new URLSearchParams(location.search);
   const saved = localStorage.getItem("jobAssistantKey");
   const provided = params.get("key");
@@ -135,5 +86,3 @@
     } catch (e) { $("out").textContent = "⚠ " + e.message; }
   });
 </script>
-</body>
-</html>
