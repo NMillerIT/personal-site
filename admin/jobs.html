@@ -299,21 +299,25 @@ $('clearAll').onclick = () => {
   }
 })();
 
-/* ========== Bookmarklet ========== */
-// This runs on a LinkedIn job page, grabs visible fields, and opens this admin page with them prefilled.
-// Drag the generated link into your bookmarks bar.
+/* ========== Bookmarklet (LinkedIn 2025 layout) ========== */
 (function makeBookmarklet(){
   const adminUrl = location.origin + location.pathname.replace(/\/admin\/.*$/,'/admin/jobs.html');
-  const code = `(function(){try{
-    var t=(document.querySelector('[data-test-job-title]')||document.querySelector('h1')||{}).innerText||'';
-    var c=(document.querySelector('[data-test-company-name] a')||document.querySelector('.topcard__org-name-link')||{}).innerText||'';
-    var l=(document.querySelector('[data-test-job-location]')||document.querySelector('.topcard__flavor--bullet')||{}).innerText||'';
-    var u=location.href;
-    var q='?pf=1&title='+encodeURIComponent(t)+'&company='+encodeURIComponent(c)+'&location='+encodeURIComponent(l)+'&link='+encodeURIComponent(u);
-    window.open('${adminUrl}'+q,'_blank');
-  }catch(e){alert('Bookmarklet error: '+e.message);}})();`;
-  $('bm').href = 'javascript:' + code.replace(/\s+/g,' ');
+  const code = `(function(){
+    try {
+      const title = document.querySelector('h1.top-card-layout__title, h1')?.innerText?.trim() || '';
+      const company = document.querySelector('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a')?.innerText?.trim() || '';
+      const location = document.querySelector('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet')?.innerText?.trim() || '';
+      const url = location.href;
+      const q = '?pf=1&title=' + encodeURIComponent(title) + '&company=' + encodeURIComponent(company) +
+                '&location=' + encodeURIComponent(location) + '&link=' + encodeURIComponent(url);
+      window.open('${adminUrl}' + q, '_blank');
+    } catch(e) {
+      alert('Could not capture job info: ' + e.message);
+    }
+  })();`;
+  document.getElementById('bm').href = 'javascript:' + code.replace(/\s+/g,' ');
 })();
+  
 </script>
 </body>
 </html>
