@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jobs Admin</title>
+<meta name="robots" content="noindex,nofollow" />
+<style>
+  :root { --ink:#0b1220; --muted:#6b7280; --line:#e5e7eb; --bg:#fff; --accent:#0ea5e9; }
+  body { margin:24px; font:15px system-ui,-apple-system,"Segoe UI",Roboto; color:var(--ink); background:var(--bg) }
+  h1 { margin:0 0 8px; font-size:26px }
+  .note { color:var(--muted); font-size:13px; margin-bottom:16px }
+  .card { border:1px solid var(--line); border-radius:12px; padding:14px; margin:12px 0 }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:end }
+  label { font-size:12px; color:var(--muted) }
+  input, select, textarea { font:inherit; padding:10px; border:1px solid var(--line); border-radius:10px }
+  input[type="text"]{ min-width:220px }
+  button { padding:10px 14px; border:0; border-radius:10px; background:var(--accent); color:#06202e; font-weight:700; cursor:pointer }
+  table { width:100%; border-collapse:collapse; font-size:14px }
+  th, td { border-top:1px solid var(--line); padding:10px; vertical-align:top }
+  .right { text-align:right }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+  .pill { display:inline-block; padding:.2rem .5rem; border:1px solid var(--line); border-radius:999px; margin-right:6px; font-size:12px; color:var(--muted) }
+</style>
+</head>
+<body>
+  <h1>Jobs Admin</h1>
+  <p class="note">Private page (not linked). Use it to build LinkedIn searches and track applications. Data is stored locally in your browser.</p>
+
+  <!-- 1) LinkedIn search builder -->
+  <div class="card">
+    <h3 style="margin:0 0 6px">LinkedIn Search Builder</h3>
+    <div class="row">
+      <div>
+        <label>Keywords</label><br/>
+        <input id="kw" type="text" placeholder="e.g., Data Analyst Python SQL"/>
+      </div>
+      <div>
+        <label>Location</label><br/>
+        <input id="loc" type="text" placeholder="Remote or City, State"/>
+      </div>
+      <div>
+        <label>Date posted</label><br/>
+        <select id="date">
+          <option value="">Anytime</option>
+          <option value="r86400">Past 24 hours</option>
+          <option value="r604800">Past week</option>
+          <option value="r2592000">Past month</option>
+        </select>
+      </div>
+      <div>
+        <label>Experience</label><br/>
+        <select id="exp">
+          <option value="">Any</option>
+          <option value="2">Entry level</option>
+          <option value="3">Associate</option>
+          <option value="4">Mid-Senior</option>
+          <option value="5">Director</option>
+        </select>
+      </div>
+      <div>
+        <label>On-site / Remote</label><br/>
+        <select id="onsite">
+          <option value="">Any</option>
+          <option value="1">On-site</option>
+          <option value="2">Hybrid</option>
+          <option value="3">Remote</option>
+        </select>
+      </div>
+      <div>
+        <button id="openLI">Open LinkedIn Search</button>
+      </div>
+    </div>
+    <p class="note">Tip: LinkedIn URL params change sometimes; this builder uses common filters and opens a new tab with results sorted by recent.</p>
+  </div>
+
+  <!-- 2) Tracker quick add -->
+  <div class="card">
+    <h3 style="margin:0 0 6px">Quick Add to Tracker</h3>
+    <div class="row">
+      <div><label>Title</label><br/><input id="tTitle" type="text" placeholder="Job title"></div>
+      <div><label>Company</label><br/><input id="tCompany" type="text" placeholder="Company"></div>
+      <div><label>Location</label><br/><input id="tLocation" type="text" placeholder="City / Remote"></div>
+      <div style="flex:1 0 100%"><label>Job Link</label><br/><input id="tLink" type="text" placeholder="https://..."></div>
+      <div>
+        <label>Status</label><br/>
+        <select id="tStatus">
+          <option>Saved</option>
+          <option>Applied</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+        </select>
+      </div>
+      <div style="flex:1 0 100%"><label>Notes</label><br/><textarea id="tNotes" rows="2" placeholder="Quick notes…"></textarea></div>
+      <div><button id="addRow">Add</button></div>
+      <div><button id="exportCsv" style="background:#10b981">Export CSV</button></div>
+      <div><button id="clearAll" style="background:#ef4444;color:#fff">Clear (local)</button></div>
+    </div>
+  </div>
+
+  <!-- 3) Table -->
+  <div class="card">
+    <div>
+      <span class="pill">Saved</span><span class="pill">Applied</span><span class="pill">Interview</span>
+      <span class="pill">Offer</span><span class="pill">Rejected</span>
+    </div>
+    <table id="tab">
+      <thead>
+        <tr><th>Title</th><th>Company</th><th>Location</th><th>Link</th><th>Status</th><th>Notes</th><th class="right">—</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 4) Bookmarklet installer -->
+  <div class="card">
+    <h3 style="margin:0 0 6px">Bookmarklet: “Save to Tracker”</h3>
+    <p class="note">Drag this to your bookmarks bar: 
+      <a id="bm" class="mono" href="#">Save to Tracker</a>
+    </p>
+    <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It tries to read title/company/location and opens this page with fields prefilled.</p>
+  </div>
+
+<script>
+/* ========== LinkedIn Search Builder ========== */
+document.getElementById('openLI').onclick = () => {
+  const q = encodeURIComponent(document.getElementById('kw').value.trim());
+  const loc = encodeURIComponent(document.getElementById('loc').value.trim());
+  const f_TPR = document.getElementById('date').value;     // time posted
+  const f_E = document.getElementById('exp').value;        // experience
+  const f_WT = document.getElementById('onsite').value;    // on-site/remote
+
+  // Base LI job search URL
+  let url = `https://www.linkedin.com/jobs/search/?keywords=${q}`;
+  if (loc) url += `&location=${loc}`;
+  if (f_TPR) url += `&f_TPR=${f_TPR}`;
+  if (f_E)   url += `&f_E=${f_E}`;
+  if (f_WT)  url += `&f_WT=${f_WT}`;
+  url += `&sortBy=R`; // recent
+  window.open(url, '_blank');
+};
+
+/* ========== Tracker (localStorage) ========== */
+const KEY = 'jobs_tracker_v1';
+const $ = (id)=>document.getElementById(id);
+const tbody = $('tab').querySelector('tbody');
+
+function loadAll(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
+function saveAll(rows){ localStorage.setItem(KEY, JSON.stringify(rows)); }
+function render(){
+  const rows = loadAll();
+  tbody.innerHTML = '';
+  rows.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(r.title||'')}</td>
+      <td>${escapeHtml(r.company||'')}</td>
+      <td>${escapeHtml(r.location||'')}</td>
+      <td><a href="${r.link||'#'}" target="_blank">open</a></td>
+      <td>${escapeHtml(r.status||'Saved')}</td>
+      <td>${escapeHtml(r.notes||'')}</td>
+      <td class="right"><button data-i="${i}" class="del" style="background:#e5e7eb">Remove</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+render();
+
+$('addRow').onclick = () => {
+  const rows = loadAll();
+  rows.unshift({
+    title: $('tTitle').value.trim(),
+    company: $('tCompany').value.trim(),
+    location: $('tLocation').value.trim(),
+    link: $('tLink').value.trim(),
+    status: $('tStatus').value,
+    notes: $('tNotes').value.trim(),
+    addedAt: new Date().toISOString()
+  });
+  saveAll(rows); render();
+  // clear form
+  ['tTitle','tCompany','tLocation','tLink','tNotes'].forEach(id=>$(id).value='');
+};
+
+tbody.addEventListener('click', (e)=>{
+  const b = e.target.closest('button.del'); if(!b) return;
+  const i = +b.dataset.i; const rows = loadAll(); rows.splice(i,1); saveAll(rows); render();
+});
+
+$('exportCsv').onclick = () => {
+  const rows = loadAll();
+  const csv = ['Title,Company,Location,Link,Status,Notes,AddedAt']
+    .concat(rows.map(r => [
+      r.title, r.company, r.location, r.link, r.status, r.notes, r.addedAt
+    ].map(x => `"${String(x||'').replace(/"/g,'""')}"`).join(',')))
+    .join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'jobs-tracker.csv';
+  a.click();
+};
+
+$('clearAll').onclick = () => {
+  if (confirm('Clear all tracker data stored in this browser?')) { localStorage.removeItem(KEY); render(); }
+};
+
+/* ========== Prefill via URL (from bookmarklet) ========== */
+(function prefillFromQuery(){
+  const p = new URLSearchParams(location.search);
+  if (p.get('pf') === '1') {
+    $('tTitle').value = p.get('title') || '';
+    $('tCompany').value = p.get('company') || '';
+    $('tLocation').value = p.get('location') || '';
+    $('tLink').value = p.get('link') || '';
+  }
+})();
+
+/* ========== Bookmarklet ========== */
+// This runs on a LinkedIn job page, grabs visible fields, and opens this admin page with them prefilled.
+// Drag the generated link into your bookmarks bar.
+(function makeBookmarklet(){
+  const adminUrl = location.origin + location.pathname.replace(/\/admin\/.*$/,'/admin/jobs.html');
+  const code = `(function(){try{
+    var t=(document.querySelector('[data-test-job-title]')||document.querySelector('h1')||{}).innerText||'';
+    var c=(document.querySelector('[data-test-company-name] a')||document.querySelector('.topcard__org-name-link')||{}).innerText||'';
+    var l=(document.querySelector('[data-test-job-location]')||document.querySelector('.topcard__flavor--bullet')||{}).innerText||'';
+    var u=location.href;
+    var q='?pf=1&title='+encodeURIComponent(t)+'&company='+encodeURIComponent(c)+'&location='+encodeURIComponent(l)+'&link='+encodeURIComponent(u);
+    window.open('${adminUrl}'+q,'_blank');
+  }catch(e){alert('Bookmarklet error: '+e.message);}})();`;
+  $('bm').href = 'javascript:' + code.replace(/\s+/g,' ');
+})();
+</script>
+</body>
+</html>
