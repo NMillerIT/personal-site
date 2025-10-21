@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Job Assistant — Admin</title>
+  <!-- keep it out of search results -->
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    body { font: 16px system-ui, -apple-system, Segoe UI, Roboto; margin: 24px; line-height: 1.45; color: #0b1220 }
+    .note { color:#6b7280; font-size: 13px; margin-bottom: 8px }
+    textarea, input, button { font: inherit }
+    textarea { width: 100%; min-height: 140px; margin: 8px 0 }
+    pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 8px; overflow:auto }
+    .gate { padding:20px; border:1px dashed #9ca3af; border-radius:10px; max-width:520px }
+  </style>
+</head>
+<body>
+  <h1>Job Assistant (v0)</h1>
+  <p class="note">Hidden page. Not linked anywhere. Uses a simple key check via URL parameter.</p>
+
+  <!-- simple “secret key” gate (obfuscation, not security) -->
+  <div id="gate" class="gate">
+    <p><strong>Access</strong> — open with <code>?key=whatever-you-choose</code> in the URL.</p>
+    <p class="note">Example: <code>https://YOUR-USERNAME.github.io/personal-site/admin/job-assistant.html?key=myKey</code></p>
+  </div>
+
+  <div id="app" style="display:none">
+    <h3>1) Paste Resume JSON</h3>
+<pre>{
+  "basics": {"name":"Your Name","email":"you@email"},
+  "skills": [{"name":"Python","keywords":["pandas","sql","fastapi"]}],
+  "experience": [{
+    "company":"Acme","title":"Data Analyst","start":"2022-03","end":"2024-08",
+    "bullets":["Built forecasting pipeline in Python","Cut SLA breaches by 32%"],
+    "skills":["Python","SQL","Tableau"]
+  }]
+}</pre>
+    <textarea id="resumeJson"></textarea>
+
+    <h3>2) Paste Job Description</h3>
+    <textarea id="jd"></textarea>
+
+    <button id="btnTailor">Tailor Resume Bullets</button>
+
+    <h3>Output</h3>
+    <pre id="out">Ready…</pre>
+  </div>
+
+<script>
+  // ===== “hidden but accessible” gate =====
+  // Choose your key once; keep it in localStorage so you don't need to append it every time.
+  const MY_KEY = "pick-a-short-secret"; // <-- set this to anything you like
+  const params = new URLSearchParams(location.search);
+  const saved = localStorage.getItem("jobAssistantKey");
+  const provided = params.get("key");
+
+  if (provided) localStorage.setItem("jobAssistantKey", provided);
+
+  if (saved === MY_KEY || provided === MY_KEY) {
+    document.getElementById("gate").style.display = "none";
+    document.getElementById("app").style.display = "";
+  }
+
+  // ===== app v0 (no LLM; deterministic) =====
+  const $ = (id) => document.getElementById(id);
+  const tokenize = (text) =>
+    (text || "").toLowerCase().replace(/[^a-z0-9+.# ]/g, " ").split(/\s+/).filter(Boolean);
+
+  function parseResume() {
+    try { return JSON.parse($("resumeJson").value.trim()); }
+    catch (_) { throw new Error("Resume JSON is invalid"); }
+  }
+
+  function extractKeywordsFromJD(jd) {
+    const tokens = tokenize(jd);
+    const stop = new Set(["and","or","with","for","to","of","in","the","a","an","on","at","by"]);
+    const techBias = new Set(["python","javascript","typescript","react","sql","aws","gcp","azure","docker","kubernetes","pandas","fastapi","node","java","c#","cpp","tableau","dbt","airflow","ml","ai","llm"]);
+    const must = [], nice = [];
+    for (const w of tokens) {
+      if (stop.has(w)) continue;
+      if (!/^[a-z0-9+.#-]{2,}$/.test(w)) continue;
+      (techBias.has(w) ? must : nice).push(w);
+    }
+    const rank = (arr) => {
+      const m = new Map();
+      arr.forEach(a => m.set(a, (m.get(a)||0)+1));
+      return [...m.entries()].sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+    };
+    return { must: rank(must).slice(0,30), nice: rank(nice).slice(0,30) };
+  }
+
+  function scoreMatch(resume, jdKeys) {
+    const all = new Set();
+    (resume.skills||[]).forEach(s => { if (s.name) all.add(s.name.toLowerCase()); (s.keywords||[]).forEach(k => all.add(String(k).toLowerCase())); });
+    (resume.experience||[]).forEach(e => (e.skills||[]).forEach(k => all.add(String(k).toLowerCase())));
+    const mustHit = jdKeys.must.filter(k => all.has(k));
+    const niceHit = jdKeys.nice.filter(k => all.has(k));
+    const score = Math.round((mustHit.length*3 + niceHit.length) / Math.max(1, jdKeys.must.length*3 + jdKeys.nice.length) * 100);
+    return { score, mustHit };
+  }
+
+  function quantify(text) {
+    return text
+      .replace(/\b(increased|reduced|cut|improved|boosted)\b(?!.*?\d)/gi, "$1 ~X%")
+      .replace(/\b(delivered|launched|built|designed|migrated)\b(?!.*?\d)/gi, "$1 in ~N weeks");
+  }
+
+  function tailorBullets(resume, jd) {
+    const keys = extractKeywordsFromJD(jd);
+    const match = scoreMatch(resume, keys);
+    let bullets = [];
+    (resume.experience||[]).forEach(exp => {
+      const base = exp.bullets||[];
+      const ranked = base
+        .map(b => {
+          const t = tokenize(b);
+          const weight = t.filter(w => keys.must.includes(w)).length*2 + t.filter(w => keys.nice.includes(w)).length;
+          return { b, weight };
+        })
+        .sort((a,b)=>b.weight-a.weight)
+        .slice(0,3)
+        .map(x => x.b);
+      ranked.forEach(b => bullets.push("• " + quantify(b)));
+    });
+    return `ATS match: ${match.score}%\nKeywords hit: ${match.mustHit.join(", ")}\n\n${bullets.join("\n")}`;
+  }
+
+  $("btnTailor").addEventListener("click", () => {
+    try {
+      const resume = parseResume();
+      const jd = $("jd").value.trim();
+      if (!jd) throw new Error("Job description is missing");
+      $("out").textContent = tailorBullets(resume, jd);
+    } catch (e) { $("out").textContent = "⚠ " + e.message; }
+  });
+</script>
+</body>
+</html>
