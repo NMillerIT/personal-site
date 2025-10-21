@@ -243,7 +243,7 @@ function render(){
       <td>${escapeHtml(r.title||'')}</td>
       <td>${escapeHtml(r.company||'')}</td>
       <td>${escapeHtml(r.location||'')}</td>
-      <td><a href="${r.link||'#'}" target="_blank">open</a></td>
+      <td><a href="${/^https?:\/\//i.test(r.link||'') ? r.link : '#'}" target="_blank">open</a></td>
       <td>${escapeHtml(r.status||'Saved')}</td>
       <td>${escapeHtml(r.notes||'')}</td>
       <td class="right"><button data-i="${i}" class="del" style="background:#e5e7eb">Remove</button></td>`;
@@ -303,21 +303,32 @@ $('clearAll').onclick = () => {
   }
 })();
 
-/* ========== Bookmarklet (LinkedIn 2025 + Firefox fix + Copy helper) ========== */
+/* ========== Bookmarklet (LinkedIn 2025 + Firefox fix + retry + Copy helper) ========== */
 (function makeBookmarklet(){
   const adminUrl = location.origin + location.pathname.replace(/\/admin\/.*$/,'/admin/jobs.html');
+
+  // This function string runs ON the LinkedIn page when the bookmarklet is clicked
   const code = `(function(){
-    try {
+    function readFields(){
       const title = document.querySelector('h1.top-card-layout__title, h1')?.innerText?.trim() || '';
       const company = document.querySelector('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a')?.innerText?.trim() || '';
       const location = document.querySelector('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet')?.innerText?.trim() || '';
       const currentUrl = window.location?.href || document.location?.href || '';
-      const q = '?pf=1&title=' + encodeURIComponent(title) + '&company=' + encodeURIComponent(company) +
-                '&location=' + encodeURIComponent(location) + '&link=' + encodeURIComponent(currentUrl);
-      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
-    } catch(e) {
-      alert('Could not capture job info: ' + e.message);
+      return { title, company, location, currentUrl };
     }
+
+    (function tryRead(tries){
+      const { title, company, location, currentUrl } = readFields();
+      if ((title || company || location) || tries >= 5) {
+        const q = '?pf=1&title=' + encodeURIComponent(title) +
+                  '&company=' + encodeURIComponent(company) +
+                  '&location=' + encodeURIComponent(location) +
+                  '&link=' + encodeURIComponent(currentUrl);
+        window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
+      } else {
+        setTimeout(() => tryRead(tries + 1), 250); // wait a bit and retry
+      }
+    })(0);
   })();`;
 
   const minified = 'javascript:' + code.replace(/\s+/g,' ');
@@ -329,10 +340,10 @@ $('clearAll').onclick = () => {
   btn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(minified);
-      note.textContent = '✅ Copied! Now edit your “Save to Tracker” bookmark and paste over its URL.';
+      note.textContent = '✅ Copied! Right-click your “Save to Tracker” bookmark → Edit → paste into the URL field.';
       setTimeout(()=>note.textContent='',4000);
     } catch {
-      note.textContent = '⚠ Clipboard not available. Copy manually from below:';
+      note.textContent = '⚠ Clipboard blocked. Copy from the box below:';
       const pre = document.createElement('pre');
       pre.textContent = minified;
       btn.parentNode.appendChild(pre);
