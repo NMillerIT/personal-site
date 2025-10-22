@@ -13,22 +13,14 @@
   --bg: #0f172a;
   --accent: #38bdf8;
 }
-
 body {
   margin: 24px;
   font: 15px system-ui, -apple-system, "Segoe UI", Roboto;
   color: var(--ink);
   background: var(--bg);
 }
-
 h1 { margin: 0 0 8px; font-size: 26px; color: #f1f5f9; }
-
-.note {
-  color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
+.note { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
 .card {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -37,16 +29,13 @@ h1 { margin: 0 0 8px; font-size: 26px; color: #f1f5f9; }
   background: #1e293b;
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-
 .row {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   align-items: end;
 }
-
 label { font-size: 12px; color: var(--muted); }
-
 input, select, textarea {
   font: inherit;
   padding: 10px;
@@ -55,9 +44,7 @@ input, select, textarea {
   background: #0f172a;
   color: var(--ink);
 }
-
 input[type="text"] { min-width: 220px; }
-
 button {
   padding: 10px 14px;
   border: 0;
@@ -68,31 +55,16 @@ button {
   cursor: pointer;
   transition: background 0.2s;
 }
-
 button:hover { background: #7dd3fc; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-th, td {
-  border-top: 1px solid var(--line);
-  padding: 10px;
-  vertical-align: top;
-}
-
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { border-top: 1px solid var(--line); padding: 10px; vertical-align: top; }
 a { color: #38bdf8; text-decoration: none; }
 a:hover { text-decoration: underline; }
-
 .right { text-align: right; }
-
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color: #bae6fd;
 }
-
 .pill {
   display: inline-block;
   padding: .2rem .5rem;
@@ -106,111 +78,86 @@ a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-  <h1>Jobs Admin</h1>
-  <p class="note">Private page (not linked). Use it to build LinkedIn searches and track applications. Data is stored locally in your browser.</p>
-  <p class="note">
-  If debugging, drag this too:
-  <a id="bmPeek" class="mono" href="#">Peek capture</a>
-</p>
+<h1>Jobs Admin</h1>
+<p class="note">Private page (not linked). Use it to build LinkedIn searches and track applications. Data is stored locally in your browser.</p>
+<p class="note">If debugging, drag this too: <a id="bmPeek" class="mono" href="#">Peek capture</a></p>
 
-  <!-- 1) LinkedIn search builder -->
-  <div class="card">
-    <h3 style="margin:0 0 6px">LinkedIn Search Builder</h3>
-    <div class="row">
-      <div>
-        <label>Keywords</label><br/>
-        <input id="kw" type="text" placeholder="e.g., Data Analyst Python SQL"/>
-      </div>
-      <div>
-        <label>Location</label><br/>
-        <input id="loc" type="text" placeholder="Remote or City, State"/>
-      </div>
-      <div>
-        <label>Date posted</label><br/>
-        <select id="date">
-          <option value="">Anytime</option>
-          <option value="r86400">Past 24 hours</option>
-          <option value="r604800">Past week</option>
-          <option value="r2592000">Past month</option>
-        </select>
-      </div>
-      <div>
-        <label>Experience</label><br/>
-        <select id="exp">
-          <option value="">Any</option>
-          <option value="2">Entry level</option>
-          <option value="3">Associate</option>
-          <option value="4">Mid-Senior</option>
-          <option value="5">Director</option>
-        </select>
-      </div>
-      <div>
-        <label>On-site / Remote</label><br/>
-        <select id="onsite">
-          <option value="">Any</option>
-          <option value="1">On-site</option>
-          <option value="2">Hybrid</option>
-          <option value="3">Remote</option>
-        </select>
-      </div>
-      <div>
-        <button id="openLI">Open LinkedIn Search</button>
-      </div>
+<!-- 1) LinkedIn search builder -->
+<div class="card">
+  <h3 style="margin:0 0 6px">LinkedIn Search Builder</h3>
+  <div class="row">
+    <div><label>Keywords</label><br/><input id="kw" type="text" placeholder="e.g., Data Analyst Python SQL"/></div>
+    <div><label>Location</label><br/><input id="loc" type="text" placeholder="Remote or City, State"/></div>
+    <div><label>Date posted</label><br/>
+      <select id="date">
+        <option value="">Anytime</option>
+        <option value="r86400">Past 24 hours</option>
+        <option value="r604800">Past week</option>
+        <option value="r2592000">Past month</option>
+      </select>
     </div>
-    <p class="note">Tip: LinkedIn URL params change sometimes; this builder uses common filters and opens a new tab with results sorted by recent.</p>
-  </div>
-
-  <!-- 2) Tracker quick add -->
-  <div class="card">
-    <h3 style="margin:0 0 6px">Quick Add to Tracker</h3>
-    <div class="row">
-      <div><label>Title</label><br/><input id="tTitle" type="text" placeholder="Job title"></div>
-      <div><label>Company</label><br/><input id="tCompany" type="text" placeholder="Company"></div>
-      <div><label>Location</label><br/><input id="tLocation" type="text" placeholder="City / Remote"></div>
-      <div style="flex:1 0 100%"><label>Job Link</label><br/><input id="tLink" type="text" placeholder="https://..."></div>
-      <div>
-        <label>Status</label><br/>
-        <select id="tStatus">
-          <option>Saved</option>
-          <option>Applied</option>
-          <option>Interview</option>
-          <option>Offer</option>
-          <option>Rejected</option>
-        </select>
-      </div>
-      <div style="flex:1 0 100%"><label>Notes</label><br/><textarea id="tNotes" rows="2" placeholder="Quick notes…"></textarea></div>
-      <div><button id="addRow">Add</button></div>
-      <div><button id="exportCsv" style="background:#10b981">Export CSV</button></div>
-      <div><button id="clearAll" style="background:#ef4444;color:#fff">Clear (local)</button></div>
+    <div><label>Experience</label><br/>
+      <select id="exp">
+        <option value="">Any</option>
+        <option value="2">Entry level</option>
+        <option value="3">Associate</option>
+        <option value="4">Mid-Senior</option>
+        <option value="5">Director</option>
+      </select>
     </div>
+    <div><label>On-site / Remote</label><br/>
+      <select id="onsite">
+        <option value="">Any</option>
+        <option value="1">On-site</option>
+        <option value="2">Hybrid</option>
+        <option value="3">Remote</option>
+      </select>
+    </div>
+    <div><button id="openLI">Open LinkedIn Search</button></div>
   </div>
+  <p class="note">Tip: LinkedIn URL params change sometimes; this builder uses common filters and opens a new tab with results sorted by recent.</p>
+</div>
 
-  <!-- 3) Table -->
-  <div class="card">
+<!-- 2) Tracker quick add -->
+<div class="card">
+  <h3 style="margin:0 0 6px">Quick Add to Tracker</h3>
+  <div class="row">
+    <div><label>Title</label><br/><input id="tTitle" type="text" placeholder="Job title"></div>
+    <div><label>Company</label><br/><input id="tCompany" type="text" placeholder="Company"></div>
+    <div><label>Location</label><br/><input id="tLocation" type="text" placeholder="City / Remote"></div>
+    <div style="flex:1 0 100%"><label>Job Link</label><br/><input id="tLink" type="text" placeholder="https://..."></div>
     <div>
-      <span class="pill">Saved</span><span class="pill">Applied</span><span class="pill">Interview</span>
-      <span class="pill">Offer</span><span class="pill">Rejected</span>
+      <label>Status</label><br/>
+      <select id="tStatus">
+        <option>Saved</option><option>Applied</option><option>Interview</option>
+        <option>Offer</option><option>Rejected</option>
+      </select>
     </div>
-    <table id="tab">
-      <thead>
-        <tr><th>Title</th><th>Company</th><th>Location</th><th>Link</th><th>Status</th><th>Notes</th><th class="right">—</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div style="flex:1 0 100%"><label>Notes</label><br/><textarea id="tNotes" rows="2" placeholder="Quick notes…"></textarea></div>
+    <div><button id="addRow">Add</button></div>
+    <div><button id="exportCsv" style="background:#10b981">Export CSV</button></div>
+    <div><button id="clearAll" style="background:#ef4444;color:#fff">Clear (local)</button></div>
   </div>
+</div>
 
-  <!-- 4) Bookmarklet installer -->
-  <div class="card">
-    <h3 style="margin:0 0 6px">Bookmarklet: “Save to Tracker”</h3>
-    <p class="note">Drag this to your bookmarks bar: 
-      <a id="bm" class="mono" href="#">Save to Tracker</a>
-    </p>
-    <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It tries to read title/company/location and opens this page with fields prefilled.</p>
-    <p>
-  <button id="copyBm" style="background:#fbbf24;color:#041923">Copy Bookmarklet Code</button>
-  <span class="note" id="copyNote" style="margin-left:10px"></span>
-</p>
-  </div>
+<!-- 3) Table -->
+<div class="card">
+  <div><span class="pill">Saved</span><span class="pill">Applied</span><span class="pill">Interview</span>
+  <span class="pill">Offer</span><span class="pill">Rejected</span></div>
+  <table id="tab">
+    <thead><tr><th>Title</th><th>Company</th><th>Location</th><th>Link</th><th>Status</th><th>Notes</th><th class="right">—</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- 4) Bookmarklet installer -->
+<div class="card">
+  <h3 style="margin:0 0 6px">Bookmarklet: “Save to Tracker”</h3>
+  <p class="note">Drag this to your bookmarks bar: <a id="bm" class="mono" href="#">Save to Tracker</a></p>
+  <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It reads title/company/location and opens this page with fields prefilled.</p>
+  <p><button id="copyBm" style="background:#fbbf24;color:#041923">Copy Bookmarklet Code</button>
+  <span class="note" id="copyNote" style="margin-left:10px"></span></p>
+</div>
 
 <script>
 /* ========== LinkedIn Search Builder ========== */
@@ -233,7 +180,6 @@ document.getElementById('openLI').onclick = () => {
 const KEY = 'jobs_tracker_v1';
 const $ = (id)=>document.getElementById(id);
 const tbody = $('tab').querySelector('tbody');
-
 function loadAll(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
 function saveAll(rows){ localStorage.setItem(KEY, JSON.stringify(rows)); }
 function render(){
@@ -254,7 +200,6 @@ function render(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 render();
-
 $('addRow').onclick = () => {
   const rows = loadAll();
   rows.unshift({
@@ -269,17 +214,10 @@ $('addRow').onclick = () => {
   saveAll(rows); render();
   ['tTitle','tCompany','tLocation','tLink','tNotes'].forEach(id=>$(id).value='');
 };
-
 tbody.addEventListener('click', e=>{
-  const b = e.target.closest('button.del');
-  if(!b) return;
-  const i = +b.dataset.i;
-  const rows = loadAll();
-  rows.splice(i,1);
-  saveAll(rows);
-  render();
+  const b = e.target.closest('button.del'); if(!b)return;
+  const i=+b.dataset.i; const rows=loadAll(); rows.splice(i,1); saveAll(rows); render();
 });
-
 $('exportCsv').onclick = () => {
   const rows = loadAll();
   const csv = ['Title,Company,Location,Link,Status,Notes,AddedAt']
@@ -293,191 +231,75 @@ $('exportCsv').onclick = () => {
   a.download = 'jobs-tracker.csv';
   a.click();
 };
-
 $('clearAll').onclick = () => {
   if (confirm('Clear all tracker data stored in this browser?')) {
-    localStorage.removeItem(KEY);
-    render();
+    localStorage.removeItem(KEY); render();
   }
 };
 
 /* ========== Prefill via URL (from bookmarklet) ========== */
 (function prefillFromQuery(){
-  const p = new URLSearchParams(location.search);
-  if (p.get('pf') === '1') {
-    $('tTitle').value = p.get('title') || '';
-    $('tCompany').value = p.get('company') || '';
-    $('tLocation').value = p.get('location') || '';
-    $('tLink').value = p.get('link') || '';
+  const p=new URLSearchParams(location.search);
+  if(p.get('pf')==='1'){
+    $('tTitle').value=p.get('title')||'';
+    $('tCompany').value=p.get('company')||'';
+    $('tLocation').value=p.get('location')||'';
+    $('tLink').value=p.get('link')||'';
   }
 })();
 
-/* ========== Bookmarklet generator (baseline working) ========== */
+/* ========== Bookmarklet (stable version) ========== */
 (function makeBookmarklet(){
-  const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
-  const code = `(function(){
+  const adminUrl='https://nmillerit.github.io/personal-site/admin/jobs.html';
+  const code=`(function(){
     function readFields(){
-      const t = sel => document.querySelector(sel)?.innerText?.trim() || '';
-      const title = t('h1');
-      const company = t('.topcard__org-name-link, [data-test-id="company-name"]');
-      const location = t('.topcard__flavor--bullet, [data-test-id="job-location"]');
-      const currentUrl = window.location?.href || document.location?.href || '';
-      return { title, company, location, currentUrl };
+      const t=s=>document.querySelector(s)?.innerText?.trim()||'';
+      const getAttr=(s,a)=>document.querySelector(s)?.getAttribute(a)||'';
+      let title=t('h1[data-test-id="job-title"], h1.top-card-layout__title, h1');
+      let company=t('[data-test-id="company-name"], .topcard__org-name-link, .jobs-unified-top-card__company-name a');
+      let location=t('[data-test-id="job-location"], .topcard__flavor--bullet, .jobs-unified-top-card__bullet');
+      if(!title){const m=getAttr('meta[property="og:title"]','content'); if(m) title=m.split(' - ')[0];}
+      if(!company){const m=getAttr('meta[property="og:title"]','content'); if(m) company=m.split(' - ')[1];}
+      const currentUrl=(window.location&&window.location.href)||document.location.href||'';
+      return{title,company,location,currentUrl};
     }
-    const { title, company, location, currentUrl } = readFields();
-    const q = '?pf=1&title=' + encodeURIComponent(title) +
-              '&company=' + encodeURIComponent(company) +
-              '&location=' + encodeURIComponent(location) +
-              '&link=' + encodeURIComponent(currentUrl);
-    window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
+    (function tryRead(n){
+      const r=readFields();
+      if((r.title||r.company||r.location)||n>6){
+        const q='?pf=1&title='+encodeURIComponent(r.title)+
+                '&company='+encodeURIComponent(r.company)+
+                '&location='+encodeURIComponent(r.location)+
+                '&link='+encodeURIComponent(r.currentUrl);
+        const w=window.open('${adminUrl}'+q,'_blank','noopener,noreferrer');
+        if(!w)location.href='${adminUrl}'+q;
+      } else setTimeout(()=>tryRead(n+1),250);
+    })(0);
   })();`;
-
-  const minified = 'javascript:' + code.replace(/\s+/g,' ');
-  $('bm').href = minified;
-
-  const btn = $('copyBm');
-  const note = $('copyNote');
-  btn.onclick = async () => {
-    try {
+  const minified='javascript:'+code.replace(/\s+/g,' ');
+  $('bm').href=minified;
+  const btn=$('copyBm'); const note=$('copyNote');
+  btn.onclick=async()=>{
+    try{
       await navigator.clipboard.writeText(minified);
-      note.textContent = '✅ Copied!';
+      note.textContent='✅ Copied!';
       setTimeout(()=>note.textContent='',4000);
-    } catch {
-      note.textContent = '⚠ Clipboard blocked, copy manually.';
+    }catch{
+      note.textContent='⚠ Copy blocked.';
     }
   };
 })();
 
-/* ========== Prefill via URL (from bookmarklet) ========== */
-(function prefillFromQuery(){
-  const p = new URLSearchParams(location.search);
-  if (p.get('pf') === '1') {
-    $('tTitle').value = p.get('title') || '';
-    $('tCompany').value = p.get('company') || '';
-    $('tLocation').value = p.get('location') || '';
-    $('tLink').value = p.get('link') || '';
-  }
-})();
-
-/* ========== Bookmarklet (hardcoded admin URL + retry + Firefox-safe + Copy helper) ========== */
-(function makeBookmarklet(){
-  // HARD-CODE your admin page URL (do not derive from location on LinkedIn)
-  const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
-
-// This function string runs ON the LinkedIn page when the bookmarklet is clicked
-function readFields(){
-  const txt = sel => document.querySelector(sel)?.innerText?.trim() || '';
-  const attr = (sel, name) => document.querySelector(sel)?.getAttribute(name)?.trim() || '';
-
-  // 1) Primary (full job page) selectors
-  let title =
-    txt('h1.top-card-layout__title, h1[data-test-id="job-title"], h1.jobs-unified-top-card__job-title, h1') ||
-    txt('.job-details-jobs-unified-top-card__job-title, [class*="job-view"] h1');
-
-  let company =
-    txt('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a, [data-test-id="company-name"]') ||
-    txt('[class*="job-details-jobs-unified-top-card__primary-description-without-tagline"] a, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
-
-  let location =
-    txt('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet, [data-test-id="job-location"], .jobs-unified-top-card__bullet') ||
-    txt('[class*="sub-nav-cta__meta-text"], [class*="topcard__flavor--bullet"]');
-
-  // 2) Side panel variants (when you haven’t opened the full job page)
-  if (!title) title = txt('[data-test-job-title], .job-view-layout h1, .jobs-unified-top-card__job-title');
-  if (!company) company = txt('[data-test-company-name] a, .job-view-layout a[data-control-name*="company"]');
-  if (!location) location = txt('[data-test-job-location], .job-view-layout [class*="bullet"]');
-
-  // 3) Meta fallbacks
-  const ogTitle = attr('meta[property="og:title"]','content') || '';
-  const ogDesc  = attr('meta[property="og:description"]','content') || '';
-  const docTitle = (document.title || '').trim();
-
-  if (!title && ogTitle) title = ogTitle.split(' - ')[0].trim();
-  if (!company) {
-    const fromOg = ogTitle.split(' - ')[1]?.trim() || '';
-    const fromDoc = docTitle.split(' - ')[1]?.trim() || '';
-    company = fromOg || fromDoc || company;
-  }
-  if (!location && ogDesc) {
-    const m = ogDesc.match(/(?:·|\||—)\s*([^·|—]+)$/);
-    if (m) location = m[1].trim();
-  }
-  if (!title && docTitle) title = docTitle.split(' | ')[0].split(' - ')[0].trim();
-
-  // 4) JSON-LD fallback (LinkedIn sometimes embeds structured job data)
-  if (!title || !company || !location) {
-    const ld = [...document.querySelectorAll('script[type="application/ld+json"]')]
-      .map(s => { try { return JSON.parse(s.textContent) } catch { return null } })
-      .filter(Boolean);
-    const jobPosting = ld.find(x => (x['@type'] === 'JobPosting') || (Array.isArray(x['@type']) && x['@type'].includes('JobPosting')));
-    if (jobPosting) {
-      if (!title && jobPosting.title) title = String(jobPosting.title).trim();
-      if (!company) {
-        const org = jobPosting.hiringOrganization;
-        if (org && (org.name || org['@name'])) company = String(org.name || org['@name']).trim();
-      }
-      if (!location) {
-        const locObj = jobPosting.jobLocation || jobPosting.jobLocationType || jobPosting.applicantLocationRequirements;
-        const first = Array.isArray(locObj) ? locObj[0] : locObj;
-        const addr = first && (first.address || first.jobLocation || first);
-        const parts = [addr?.addressLocality, addr?.addressRegion, addr?.addressCountry].filter(Boolean);
-        if (parts.length) location = parts.join(', ');
-      }
-    }
-  }
-
-const currentUrl = (window.location && window.location.href) || (document.location && document.location.href) || '';
-return { title, company, location, currentUrl };
-}
-
-
-  (function tryRead(tries){
-    const { title, company, location, currentUrl } = readFields();
-    if ((title || company || location) || tries >= 5) {
-      const q = '?pf=1&title=' + encodeURIComponent(title) +
-                '&company=' + encodeURIComponent(company) +
-                '&location=' + encodeURIComponent(location) +
-                '&link=' + encodeURIComponent(currentUrl);
-      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer'); return false;
-    } else {
-      setTimeout(() => tryRead(tries + 1), 250);
-    }
-  })(0);
-})();`;
-  
-  const minified = 'javascript:' + code.replace(/\s+/g,' ');
-  document.getElementById('bm').href = minified;
-
-  // Copy-to-clipboard support
-  const btn = document.getElementById('copyBm');
-  const note = document.getElementById('copyNote');
-  btn.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(minified);
-      note.textContent = '✅ Copied! Right-click your “Save to Tracker” bookmark → Edit → paste into the URL field.';
-      setTimeout(()=>note.textContent='',4000);
-    } catch {
-      note.textContent = '⚠ Clipboard blocked. Copy from the box below:';
-      const pre = document.createElement('pre');
-      pre.textContent = minified;
-      btn.parentNode.appendChild(pre);
-    }
-  };
-})();
-
-// Build a simple "peek" bookmarklet that just shows what it will capture
+/* ========== Peek (debug helper) ========== */
 (function makePeek(){
-  const peekCode = `(function(){
-    function t(s){return document.querySelector(s)?.innerText?.trim()||'';}
-    const jobTitle = t('h1, h1[data-test-id="job-title"], h1.jobs-unified-top-card__job-title');
-    const jobCompany = t('a.topcard__org-name-link, [data-test-id="company-name"], .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
-    const jobLoc = t('[data-test-id="job-location"], .jobs-unified-top-card__bullet, .top-card-layout__second-subline span');
-    alert('Title: ' + jobTitle + '\\nCompany: ' + jobCompany + '\\nLocation: ' + jobLoc + '\\nURL: ' + (window.location && window.location.href));
+  const peekCode=`(function(){
+    const t=s=>document.querySelector(s)?.innerText?.trim()||'';
+    const title=t('h1, h1[data-test-id="job-title"]');
+    const company=t('.topcard__org-name-link,[data-test-id="company-name"]');
+    const loc=t('[data-test-id="job-location"],.topcard__flavor--bullet');
+    alert('Title: '+title+'\\nCompany: '+company+'\\nLocation: '+loc+'\\nURL: '+(window.location&&window.location.href));
   })();`;
-  document.getElementById('bmPeek').href = 'javascript:' + peekCode.replace(/\s+/g,' ');
+  document.getElementById('bmPeek').href='javascript:'+peekCode.replace(/\s+/g,' ');
 })();
-
-  
 </script>
 </body>
 </html>
