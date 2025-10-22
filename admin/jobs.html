@@ -35,7 +35,7 @@ h1 { margin: 0 0 8px; font-size: 26px; color: #f1f5f9; }
   flex-wrap: wrap;
   align-items: end;
 }
-label { font-size: 12px; color: var(--muted); }
+label { font-size: 12px; color: --muted; }
 input, select, textarea {
   font: inherit;
   padding: 10px;
@@ -124,7 +124,18 @@ a:hover { text-decoration: underline; }
   <div class="row">
     <div><label>Title</label><br/><input id="tTitle" type="text" placeholder="Job title"></div>
     <div><label>Company</label><br/><input id="tCompany" type="text" placeholder="Company"></div>
-    <div><label>Location</label><br/><input id="tLocation" type="text" placeholder="City / Remote"></div>
+
+    <!-- REPLACED: free-text location -> dropdown -->
+    <div>
+      <label>Location</label><br/>
+      <select id="tLocation">
+        <option value="">— Select —</option>
+        <option>Remote</option>
+        <option>Hybrid</option>
+        <option>On-site</option>
+      </select>
+    </div>
+
     <div style="flex:1 0 100%"><label>Job Link</label><br/><input id="tLink" type="text" placeholder="https://..."></div>
     <div>
       <label>Status</label><br/>
@@ -154,7 +165,7 @@ a:hover { text-decoration: underline; }
 <div class="card">
   <h3 style="margin:0 0 6px">Bookmarklet: “Save to Tracker”</h3>
   <p class="note">Drag this to your bookmarks bar: <a id="bm" class="mono" href="#">Save to Tracker</a></p>
-  <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It reads title/company/location and opens this page with fields prefilled.</p>
+  <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It reads title/company and opens this page with fields prefilled.</p>
   <p><button id="copyBm" style="background:#fbbf24;color:#041923">Copy Bookmarklet Code</button>
   <span class="note" id="copyNote" style="margin-left:10px"></span></p>
 </div>
@@ -180,6 +191,7 @@ document.getElementById('openLI').onclick = () => {
 const KEY = 'jobs_tracker_v1';
 const $ = (id)=>document.getElementById(id);
 const tbody = $('tab').querySelector('tbody');
+
 function loadAll(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
 function saveAll(rows){ localStorage.setItem(KEY, JSON.stringify(rows)); }
 function render(){
@@ -200,24 +212,28 @@ function render(){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 render();
+
 $('addRow').onclick = () => {
   const rows = loadAll();
   rows.unshift({
     title: $('tTitle').value.trim(),
     company: $('tCompany').value.trim(),
-    location: $('tLocation').value.trim(),
+    location: $('tLocation').value, // dropdown value
     link: $('tLink').value.trim(),
     status: $('tStatus').value,
     notes: $('tNotes').value.trim(),
     addedAt: new Date().toISOString()
   });
   saveAll(rows); render();
-  ['tTitle','tCompany','tLocation','tLink','tNotes'].forEach(id=>$(id).value='');
+  ['tTitle','tCompany','tLink','tNotes'].forEach(id=>$(id).value='');
+  $('tLocation').value = ''; // reset dropdown
 };
+
 tbody.addEventListener('click', e=>{
   const b = e.target.closest('button.del'); if(!b)return;
   const i=+b.dataset.i; const rows=loadAll(); rows.splice(i,1); saveAll(rows); render();
 });
+
 $('exportCsv').onclick = () => {
   const rows = loadAll();
   const csv = ['Title,Company,Location,Link,Status,Notes,AddedAt']
@@ -231,6 +247,7 @@ $('exportCsv').onclick = () => {
   a.download = 'jobs-tracker.csv';
   a.click();
 };
+
 $('clearAll').onclick = () => {
   if (confirm('Clear all tracker data stored in this browser?')) {
     localStorage.removeItem(KEY); render();
@@ -243,12 +260,12 @@ $('clearAll').onclick = () => {
   if(p.get('pf')==='1'){
     $('tTitle').value=p.get('title')||'';
     $('tCompany').value=p.get('company')||'';
-    $('tLocation').value=p.get('location')||'';
+    // Location deliberately not used from URL to avoid flaky transfers.
     $('tLink').value=p.get('link')||'';
   }
 })();
 
-/* ========== Bookmarklet (stable version) ========== */
+/* ========== Bookmarklet (no location param) ========== */
 (function makeBookmarklet(){
   const adminUrl='https://nmillerit.github.io/personal-site/admin/jobs.html';
   const code=`(function(){
@@ -257,18 +274,16 @@ $('clearAll').onclick = () => {
       const getAttr=(s,a)=>document.querySelector(s)?.getAttribute(a)||'';
       let title=t('h1[data-test-id="job-title"], h1.top-card-layout__title, h1');
       let company=t('[data-test-id="company-name"], .topcard__org-name-link, .jobs-unified-top-card__company-name a');
-      let location=t('[data-test-id="job-location"], .topcard__flavor--bullet, .jobs-unified-top-card__bullet');
       if(!title){const m=getAttr('meta[property="og:title"]','content'); if(m) title=m.split(' - ')[0];}
       if(!company){const m=getAttr('meta[property="og:title"]','content'); if(m) company=m.split(' - ')[1];}
       const currentUrl=(window.location&&window.location.href)||document.location.href||'';
-      return{title,company,location,currentUrl};
+      return{title,company,currentUrl};
     }
     (function tryRead(n){
       const r=readFields();
-      if((r.title||r.company||r.location)||n>6){
+      if((r.title||r.company)||n>6){
         const q='?pf=1&title='+encodeURIComponent(r.title)+
                 '&company='+encodeURIComponent(r.company)+
-                '&location='+encodeURIComponent(r.location)+
                 '&link='+encodeURIComponent(r.currentUrl);
         const w=window.open('${adminUrl}'+q,'_blank','noopener,noreferrer');
         if(!w)location.href='${adminUrl}'+q;
@@ -295,8 +310,7 @@ $('clearAll').onclick = () => {
     const t=s=>document.querySelector(s)?.innerText?.trim()||'';
     const title=t('h1, h1[data-test-id="job-title"]');
     const company=t('.topcard__org-name-link,[data-test-id="company-name"]');
-    const loc=t('[data-test-id="job-location"],.topcard__flavor--bullet');
-    alert('Title: '+title+'\\nCompany: '+company+'\\nLocation: '+loc+'\\nURL: '+(window.location&&window.location.href));
+    alert('Title: '+title+'\\nCompany: '+company+'\\nURL: '+(window.location&&window.location.href));
   })();`;
   document.getElementById('bmPeek').href='javascript:'+peekCode.replace(/\s+/g,' ');
 })();
