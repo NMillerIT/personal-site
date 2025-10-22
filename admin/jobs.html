@@ -248,77 +248,43 @@ $('clearAll').onclick = () => {
   }
 })();
 
-/* ========== Bookmarklet (2025 selectors + guaranteed new tab) ========== */
+/* ========== Bookmarklet (stable version) ========== */
 (function makeBookmarklet(){
   const adminUrl='https://nmillerit.github.io/personal-site/admin/jobs.html';
-
   const code=`(function(){
-    function txt(sel){return document.querySelector(sel)?.innerText?.trim()||'';}
-    function attr(sel,prop){return document.querySelector(sel)?.getAttribute(prop)||'';}
-
-    // Broadened selectors (2025 LinkedIn variants + older ones)
-    function readNow(){
-      let title =
-        txt('h1.jobs-details-top-card__job-title, h1[data-test-id="job-title"], h1.top-card-layout__title, h1') ||
-        txt('.job-details-jobs-unified-top-card__job-title, [class*="job-view"] h1');
-
-      let company =
-        txt('a.topcard__org-name-link, span.top-card-layout__company-name, .jobs-details-top-card__company-name a, [data-test-id="company-name"]') ||
-        txt('.jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
-
-      let location =
-        txt('[data-test-id="job-location"], .topcard__flavor--bullet, .jobs-details-top-card__bullet, .jobs-unified-top-card__subtitle, .top-card-layout__second-subline span');
-
-      // Meta fallbacks
-      const ogt = attr('meta[property="og:title"]','content') || '';
-      const ogd = attr('meta[property="og:description"]','content') || '';
-      const doct = (document.title||'').trim();
-
-      if(!title && ogt) title = ogt.split(' - ')[0]?.trim() || title;
-      if(!company){
-        const fromOg = ogt.split(' - ')[1]?.trim();
-        const fromDoc = doct.split(' - ')[1]?.trim();
-        company = fromOg || fromDoc || company;
-      }
-      if(!location && ogd){
-        const m = ogd.match(/(?:·|\||—)\s*([^·|—]+)$/);
-        if(m) location = m[1].trim();
-      }
-      if(!title && doct) title = doct.split(' | ')[0].split(' - ')[0].trim();
-
-      const currentUrl = (window.location && window.location.href) || document.location.href || '';
-      return { title, company, location, currentUrl };
+    function readFields(){
+      const t=s=>document.querySelector(s)?.innerText?.trim()||'';
+      const getAttr=(s,a)=>document.querySelector(s)?.getAttribute(a)||'';
+      let title=t('h1[data-test-id="job-title"], h1.top-card-layout__title, h1');
+      let company=t('[data-test-id="company-name"], .topcard__org-name-link, .jobs-unified-top-card__company-name a');
+      let location=t('[data-test-id="job-location"], .topcard__flavor--bullet, .jobs-unified-top-card__bullet');
+      if(!title){const m=getAttr('meta[property="og:title"]','content'); if(m) title=m.split(' - ')[0];}
+      if(!company){const m=getAttr('meta[property="og:title"]','content'); if(m) company=m.split(' - ')[1];}
+      const currentUrl=(window.location&&window.location.href)||document.location.href||'';
+      return{title,company,location,currentUrl};
     }
-
-    // Retry a few times to let LinkedIn lazy-load
-    (function tryRead(tries){
-      const r = readNow();
-      if ((r.title || r.company || r.location) || tries >= 6) {
-        const q='?pf=1&pf=1&title='+encodeURIComponent(r.title)+
+    (function tryRead(n){
+      const r=readFields();
+      if((r.title||r.company||r.location)||n>6){
+        const q='?pf=1&title='+encodeURIComponent(r.title)+
                 '&company='+encodeURIComponent(r.company)+
                 '&location='+encodeURIComponent(r.location)+
                 '&link='+encodeURIComponent(r.currentUrl);
-        // Unique name so the browser NEVER reuses the current tab
-        const w = window.open('${adminUrl}'+q, 'jobtrack_'+Date.now(), 'noopener,noreferrer');
-        if(!w){ location.href='${adminUrl}'+q; }
-      } else {
-        setTimeout(()=>tryRead(tries+1), 250);
-      }
+        const w=window.open('${adminUrl}'+q,'_blank','noopener,noreferrer');
+        if(!w)location.href='${adminUrl}'+q;
+      } else setTimeout(()=>tryRead(n+1),250);
     })(0);
   })();`;
-
   const minified='javascript:'+code.replace(/\s+/g,' ');
-  document.getElementById('bm').href=minified;
-
-  const btn=document.getElementById('copyBm');
-  const note=document.getElementById('copyNote');
+  $('bm').href=minified;
+  const btn=$('copyBm'); const note=$('copyNote');
   btn.onclick=async()=>{
     try{
       await navigator.clipboard.writeText(minified);
-      note.textContent='✅ Copied! Update your “Save to Tracker” bookmark URL.';
+      note.textContent='✅ Copied!';
       setTimeout(()=>note.textContent='',4000);
     }catch{
-      note.textContent='⚠ Copy blocked. Copy manually from the link.';
+      note.textContent='⚠ Copy blocked.';
     }
   };
 })();
