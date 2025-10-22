@@ -308,30 +308,35 @@ $('clearAll').onclick = () => {
   // HARD-CODE your admin page URL (do not derive from location on LinkedIn)
   const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
 
-  // This function string runs ON the LinkedIn page when the bookmarklet is clicked
-  const code = `(function(){
-    function readFields(){
-      const title = document.querySelector('h1.top-card-layout__title, h1')?.innerText?.trim() || '';
-      const company = document.querySelector('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a')?.innerText?.trim() || '';
-      const location = document.querySelector('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet')?.innerText?.trim() || '';
-      const currentUrl = window.location?.href || document.location?.href || '';
-      return { title, company, location, currentUrl };
+// This function string runs ON the LinkedIn page when the bookmarklet is clicked
+const code = `(function(){
+  function readFields(){
+    const text = sel => document.querySelector(sel)?.innerText?.trim() || '';
+
+    const title = text('h1.top-card-layout__title, h1[data-test-id="job-title"], h1') ||
+                  text('.job-details-jobs-unified-top-card__job-title, [class*="job-view"] h1');
+    const company = text('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a, [data-test-id="company-name"]') ||
+                    text('[class*="job-details-jobs-unified-top-card__primary-description-without-tagline"] a');
+    const location = text('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet, [data-test-id="job-location"]') ||
+                     text('[class*="sub-nav-cta__meta-text"], [class*="topcard__flavor--bullet"]');
+    const currentUrl = window.location?.href || document.location?.href || '';
+    return { title, company, location, currentUrl };
+  }
+
+  (function tryRead(tries){
+    const { title, company, location, currentUrl } = readFields();
+    if ((title || company || location) || tries >= 5) {
+      const q = '?pf=1&title=' + encodeURIComponent(title) +
+                '&company=' + encodeURIComponent(company) +
+                '&location=' + encodeURIComponent(location) +
+                '&link=' + encodeURIComponent(currentUrl);
+      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
+    } else {
+      setTimeout(() => tryRead(tries + 1), 250);
     }
-
-    (function tryRead(tries){
-      const { title, company, location, currentUrl } = readFields();
-      if ((title || company || location) || tries >= 5) {
-        const q = '?pf=1&title=' + encodeURIComponent(title) +
-                  '&company=' + encodeURIComponent(company) +
-                  '&location=' + encodeURIComponent(location) +
-                  '&link=' + encodeURIComponent(currentUrl);
-        window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
-      } else {
-        setTimeout(() => tryRead(tries + 1), 250);
-      }
-    })(0);
-  })();`;
-
+  })(0);
+})();`;
+  
   const minified = 'javascript:' + code.replace(/\s+/g,' ');
   document.getElementById('bm').href = minified;
 
