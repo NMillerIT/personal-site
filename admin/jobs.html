@@ -374,8 +374,8 @@ function readFields(){
     }
   }
 
-  const currentUrl = window.location?.href || document.location?.href || '';
-  return { title, company, location, currentUrl };
+const currentUrl = (window.location && window.location.href) || (document.location && document.location.href) || '';
+return { title, company, location, currentUrl };
 }
 
 
@@ -386,7 +386,7 @@ function readFields(){
                 '&company=' + encodeURIComponent(company) +
                 '&location=' + encodeURIComponent(location) +
                 '&link=' + encodeURIComponent(currentUrl);
-      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
+      window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer'); return false;
     } else {
       setTimeout(() => tryRead(tries + 1), 250);
     }
