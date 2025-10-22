@@ -217,17 +217,15 @@ a:hover { text-decoration: underline; }
 document.getElementById('openLI').onclick = () => {
   const q = encodeURIComponent(document.getElementById('kw').value.trim());
   const loc = encodeURIComponent(document.getElementById('loc').value.trim());
-  const f_TPR = document.getElementById('date').value;     // time posted
-  const f_E = document.getElementById('exp').value;        // experience
-  const f_WT = document.getElementById('onsite').value;    // on-site/remote
-
-  // Base LI job search URL
+  const f_TPR = document.getElementById('date').value;
+  const f_E = document.getElementById('exp').value;
+  const f_WT = document.getElementById('onsite').value;
   let url = `https://www.linkedin.com/jobs/search/?keywords=${q}`;
   if (loc) url += `&location=${loc}`;
   if (f_TPR) url += `&f_TPR=${f_TPR}`;
-  if (f_E)   url += `&f_E=${f_E}`;
-  if (f_WT)  url += `&f_WT=${f_WT}`;
-  url += `&sortBy=R`; // recent
+  if (f_E) url += `&f_E=${f_E}`;
+  if (f_WT) url += `&f_WT=${f_WT}`;
+  url += `&sortBy=R`;
   window.open(url, '_blank');
 };
 
@@ -269,13 +267,17 @@ $('addRow').onclick = () => {
     addedAt: new Date().toISOString()
   });
   saveAll(rows); render();
-  // clear form
   ['tTitle','tCompany','tLocation','tLink','tNotes'].forEach(id=>$(id).value='');
 };
 
-tbody.addEventListener('click', (e)=>{
-  const b = e.target.closest('button.del'); if(!b) return;
-  const i = +b.dataset.i; const rows = loadAll(); rows.splice(i,1); saveAll(rows); render();
+tbody.addEventListener('click', e=>{
+  const b = e.target.closest('button.del');
+  if(!b) return;
+  const i = +b.dataset.i;
+  const rows = loadAll();
+  rows.splice(i,1);
+  saveAll(rows);
+  render();
 });
 
 $('exportCsv').onclick = () => {
@@ -293,8 +295,58 @@ $('exportCsv').onclick = () => {
 };
 
 $('clearAll').onclick = () => {
-  if (confirm('Clear all tracker data stored in this browser?')) { localStorage.removeItem(KEY); render(); }
+  if (confirm('Clear all tracker data stored in this browser?')) {
+    localStorage.removeItem(KEY);
+    render();
+  }
 };
+
+/* ========== Prefill via URL (from bookmarklet) ========== */
+(function prefillFromQuery(){
+  const p = new URLSearchParams(location.search);
+  if (p.get('pf') === '1') {
+    $('tTitle').value = p.get('title') || '';
+    $('tCompany').value = p.get('company') || '';
+    $('tLocation').value = p.get('location') || '';
+    $('tLink').value = p.get('link') || '';
+  }
+})();
+
+/* ========== Bookmarklet generator (baseline working) ========== */
+(function makeBookmarklet(){
+  const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
+  const code = `(function(){
+    function readFields(){
+      const t = sel => document.querySelector(sel)?.innerText?.trim() || '';
+      const title = t('h1');
+      const company = t('.topcard__org-name-link, [data-test-id="company-name"]');
+      const location = t('.topcard__flavor--bullet, [data-test-id="job-location"]');
+      const currentUrl = window.location?.href || document.location?.href || '';
+      return { title, company, location, currentUrl };
+    }
+    const { title, company, location, currentUrl } = readFields();
+    const q = '?pf=1&title=' + encodeURIComponent(title) +
+              '&company=' + encodeURIComponent(company) +
+              '&location=' + encodeURIComponent(location) +
+              '&link=' + encodeURIComponent(currentUrl);
+    window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
+  })();`;
+
+  const minified = 'javascript:' + code.replace(/\s+/g,' ');
+  $('bm').href = minified;
+
+  const btn = $('copyBm');
+  const note = $('copyNote');
+  btn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(minified);
+      note.textContent = '✅ Copied!';
+      setTimeout(()=>note.textContent='',4000);
+    } catch {
+      note.textContent = '⚠ Clipboard blocked, copy manually.';
+    }
+  };
+})();
 
 /* ========== Prefill via URL (from bookmarklet) ========== */
 (function prefillFromQuery(){
