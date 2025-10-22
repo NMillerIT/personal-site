@@ -35,7 +35,7 @@ h1 { margin: 0 0 8px; font-size: 26px; color: #f1f5f9; }
   flex-wrap: wrap;
   align-items: end;
 }
-label { font-size: 12px; color: --muted; }
+label { font-size: 12px; color: var(--muted); }
 input, select, textarea {
   font: inherit;
   padding: 10px;
@@ -125,7 +125,7 @@ a:hover { text-decoration: underline; }
     <div><label>Title</label><br/><input id="tTitle" type="text" placeholder="Job title"></div>
     <div><label>Company</label><br/><input id="tCompany" type="text" placeholder="Company"></div>
 
-    <!-- REPLACED: free-text location -> dropdown -->
+    <!-- Dropdown Location -->
     <div>
       <label>Location</label><br/>
       <select id="tLocation">
@@ -165,7 +165,7 @@ a:hover { text-decoration: underline; }
 <div class="card">
   <h3 style="margin:0 0 6px">Bookmarklet: “Save to Tracker”</h3>
   <p class="note">Drag this to your bookmarks bar: <a id="bm" class="mono" href="#">Save to Tracker</a></p>
-  <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It reads title/company and opens this page with fields prefilled.</p>
+  <p class="note">How it works: on a LinkedIn job page, click the bookmarklet. It reads title/company and opens this page with fields prefilled (then shows “Loading…” and closes the capture tab).</p>
   <p><button id="copyBm" style="background:#fbbf24;color:#041923">Copy Bookmarklet Code</button>
   <span class="note" id="copyNote" style="margin-left:10px"></span></p>
 </div>
@@ -260,38 +260,76 @@ $('clearAll').onclick = () => {
   if(p.get('pf')==='1'){
     $('tTitle').value=p.get('title')||'';
     $('tCompany').value=p.get('company')||'';
-    // Location deliberately not used from URL to avoid flaky transfers.
+    // Location deliberately not passed via bookmarklet.
     $('tLink').value=p.get('link')||'';
   }
 })();
 
-/* ========== Bookmarklet (no location param) ========== */
+/* ========== Bookmarklet: Save to Tracker (with Loading + auto-close) ========== */
 (function makeBookmarklet(){
   const adminUrl='https://nmillerit.github.io/personal-site/admin/jobs.html';
-  const code=`(function(){
-    function readFields(){
-      const t=s=>document.querySelector(s)?.innerText?.trim()||'';
-      const getAttr=(s,a)=>document.querySelector(s)?.getAttribute(a)||'';
-      let title=t('h1[data-test-id="job-title"], h1.top-card-layout__title, h1');
-      let company=t('[data-test-id="company-name"], .topcard__org-name-link, .jobs-unified-top-card__company-name a');
-      if(!title){const m=getAttr('meta[property="og:title"]','content'); if(m) title=m.split(' - ')[0];}
-      if(!company){const m=getAttr('meta[property="og:title"]','content'); if(m) company=m.split(' - ')[1];}
-      const currentUrl=(window.location&&window.location.href)||document.location.href||'';
-      return{title,company,currentUrl};
+
+  const code = `(function(){
+    const admin='${adminUrl}';
+    const w=window.open('about:blank','pt_'+Date.now());
+    if(!w){alert('Popup blocked');return;}
+    const esc=s=>String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    let dt=(document.title||'').trim();
+    dt=dt.replace(/\\s*\\|\\s*LinkedIn.*/i,'').replace(/\\s*-\\s*LinkedIn.*/i,'');
+    const parts=dt.split(/\\s*\\|\\s*|\\s*-\\s*/);
+    const TITLE=(parts[0]||dt).trim();
+    const COMPANY=(parts[1]||'').trim();
+    const raw=(document.body&&document.body.innerText||'').slice(0,1200);
+
+    const html='<!doctype html><meta charset=utf-8><title>Send to Tracker</title>'
+      +'<body style="font:15px system-ui;padding:20px;background:#0f172a;color:#e2e8f0;">'
+      +'<h2 style="color:#38bdf8;">LinkedIn Job Capture</h2>'
+      +'<label>Title</label><br><input id="t" value="'+esc(TITLE)+'" style="width:100%;padding:8px;margin:4px 0;"><br>'
+      +'<label>Company</label><br><input id="c" value="'+esc(COMPANY)+'" style="width:100%;padding:8px;margin:4px 0;"><br>'
+      +'<a id="open" href="#" style="display:inline-block;margin:10px 10px 10px 0;padding:10px 16px;border-radius:8px;'
+      +'background:#38bdf8;color:#041923;font-weight:700;text-decoration:none">Open in Jobs Admin</a>'
+      +'<pre style="white-space:pre-wrap;background:#1e293b;padding:10px;border-radius:8px;max-height:40vh;overflow:auto;">'
+      +esc(raw)+'</pre></body>';
+
+    w.document.open(); w.document.write(html); w.document.close();
+
+    function init(){
+      try{
+        const d=w.document, T=d.getElementById('t'), C=d.getElementById('c'), A=d.getElementById('open');
+        if(!T||!C||!A){ setTimeout(init,40); return; }
+
+        const build=()=> admin+'?pf=1&title='+encodeURIComponent(T.value||'')
+                                 +'&company='+encodeURIComponent(C.value||'')
+                                 +'&link='+encodeURIComponent(location.href||'');
+
+        const update=()=>A.setAttribute('data-href',build());
+        [T,C].forEach(el=>el.addEventListener('input',update));
+        update();
+
+        A.addEventListener('click',ev=>{
+          ev.preventDefault();
+          const href=A.getAttribute('data-href');
+          window.open(href,'_blank','noopener,noreferrer');
+          w.document.body.innerHTML='<div style="font:18px system-ui;color:#38bdf8;text-align:center;margin-top:40px;">Loading...</div>';
+          setTimeout(()=>{ try{ w.close(); }catch(_){ } },500);
+        });
+
+        // Auto open after a short delay and show Loading..., then close the capture tab
+        setTimeout(()=>{
+          const href=A.getAttribute('data-href')||build();
+          try{ w.open(href,'_blank','noopener,noreferrer'); }catch(_){ window.open(href,'_blank','noopener,noreferrer'); }
+          w.document.body.innerHTML='<div style="font:18px system-ui;color:#38bdf8;text-align:center;margin-top:40px;">Loading...</div>';
+          setTimeout(()=>{ try{ w.close(); }catch(_){ } },800);
+        },1000);
+
+      }catch(e){ setTimeout(init,40); }
     }
-    (function tryRead(n){
-      const r=readFields();
-      if((r.title||r.company)||n>6){
-        const q='?pf=1&title='+encodeURIComponent(r.title)+
-                '&company='+encodeURIComponent(r.company)+
-                '&link='+encodeURIComponent(r.currentUrl);
-        const w=window.open('${adminUrl}'+q,'_blank','noopener,noreferrer');
-        if(!w)location.href='${adminUrl}'+q;
-      } else setTimeout(()=>tryRead(n+1),250);
-    })(0);
+    if(w.document.readyState==='complete'){ init(); } else { w.onload=init; }
   })();`;
+
   const minified='javascript:'+code.replace(/\s+/g,' ');
   $('bm').href=minified;
+
   const btn=$('copyBm'); const note=$('copyNote');
   btn.onclick=async()=>{
     try{
