@@ -303,9 +303,10 @@ $('clearAll').onclick = () => {
   }
 })();
 
-/* ========== Bookmarklet (LinkedIn 2025 + Firefox fix + retry + Copy helper) ========== */
+/* ========== Bookmarklet (hardcoded admin URL + retry + Firefox-safe + Copy helper) ========== */
 (function makeBookmarklet(){
-  const adminUrl = location.origin + location.pathname.replace(/\/admin\/.*$/,'/admin/jobs.html');
+  // HARD-CODE your admin page URL (do not derive from location on LinkedIn)
+  const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
 
   // This function string runs ON the LinkedIn page when the bookmarklet is clicked
   const code = `(function(){
@@ -326,7 +327,7 @@ $('clearAll').onclick = () => {
                   '&link=' + encodeURIComponent(currentUrl);
         window.open('${adminUrl}' + q, '_blank', 'noopener,noreferrer');
       } else {
-        setTimeout(() => tryRead(tries + 1), 250); // wait a bit and retry
+        setTimeout(() => tryRead(tries + 1), 250);
       }
     })(0);
   })();`;
