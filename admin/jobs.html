@@ -108,6 +108,10 @@ a:hover { text-decoration: underline; }
 <body>
   <h1>Jobs Admin</h1>
   <p class="note">Private page (not linked). Use it to build LinkedIn searches and track applications. Data is stored locally in your browser.</p>
+  <p class="note">
+  If debugging, drag this too:
+  <a id="bmPeek" class="mono" href="#">Peek capture</a>
+</p>
 
   <!-- 1) LinkedIn search builder -->
   <div class="card">
@@ -309,19 +313,71 @@ $('clearAll').onclick = () => {
   const adminUrl = 'https://nmillerit.github.io/personal-site/admin/jobs.html';
 
 // This function string runs ON the LinkedIn page when the bookmarklet is clicked
-const code = `(function(){
-  function readFields(){
-    const text = sel => document.querySelector(sel)?.innerText?.trim() || '';
+function readFields(){
+  const txt = sel => document.querySelector(sel)?.innerText?.trim() || '';
+  const attr = (sel, name) => document.querySelector(sel)?.getAttribute(name)?.trim() || '';
 
-    const title = text('h1.top-card-layout__title, h1[data-test-id="job-title"], h1') ||
-                  text('.job-details-jobs-unified-top-card__job-title, [class*="job-view"] h1');
-    const company = text('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a, [data-test-id="company-name"]') ||
-                    text('[class*="job-details-jobs-unified-top-card__primary-description-without-tagline"] a');
-    const location = text('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet, [data-test-id="job-location"]') ||
-                     text('[class*="sub-nav-cta__meta-text"], [class*="topcard__flavor--bullet"]');
-    const currentUrl = window.location?.href || document.location?.href || '';
-    return { title, company, location, currentUrl };
+  // 1) Primary (full job page) selectors
+  let title =
+    txt('h1.top-card-layout__title, h1[data-test-id="job-title"], h1.jobs-unified-top-card__job-title, h1') ||
+    txt('.job-details-jobs-unified-top-card__job-title, [class*="job-view"] h1');
+
+  let company =
+    txt('a.topcard__org-name-link, span.top-card-layout__company-name, .job-details-jobs-unified-top-card__company-name a, [data-test-id="company-name"]') ||
+    txt('[class*="job-details-jobs-unified-top-card__primary-description-without-tagline"] a, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
+
+  let location =
+    txt('.top-card-layout__second-subline span, .job-details-jobs-unified-top-card__bullet, [data-test-id="job-location"], .jobs-unified-top-card__bullet') ||
+    txt('[class*="sub-nav-cta__meta-text"], [class*="topcard__flavor--bullet"]');
+
+  // 2) Side panel variants (when you haven’t opened the full job page)
+  if (!title) title = txt('[data-test-job-title], .job-view-layout h1, .jobs-unified-top-card__job-title');
+  if (!company) company = txt('[data-test-company-name] a, .job-view-layout a[data-control-name*="company"]');
+  if (!location) location = txt('[data-test-job-location], .job-view-layout [class*="bullet"]');
+
+  // 3) Meta fallbacks
+  const ogTitle = attr('meta[property="og:title"]','content') || '';
+  const ogDesc  = attr('meta[property="og:description"]','content') || '';
+  const docTitle = (document.title || '').trim();
+
+  if (!title && ogTitle) title = ogTitle.split(' - ')[0].trim();
+  if (!company) {
+    const fromOg = ogTitle.split(' - ')[1]?.trim() || '';
+    const fromDoc = docTitle.split(' - ')[1]?.trim() || '';
+    company = fromOg || fromDoc || company;
   }
+  if (!location && ogDesc) {
+    const m = ogDesc.match(/(?:·|\||—)\s*([^·|—]+)$/);
+    if (m) location = m[1].trim();
+  }
+  if (!title && docTitle) title = docTitle.split(' | ')[0].split(' - ')[0].trim();
+
+  // 4) JSON-LD fallback (LinkedIn sometimes embeds structured job data)
+  if (!title || !company || !location) {
+    const ld = [...document.querySelectorAll('script[type="application/ld+json"]')]
+      .map(s => { try { return JSON.parse(s.textContent) } catch { return null } })
+      .filter(Boolean);
+    const jobPosting = ld.find(x => (x['@type'] === 'JobPosting') || (Array.isArray(x['@type']) && x['@type'].includes('JobPosting')));
+    if (jobPosting) {
+      if (!title && jobPosting.title) title = String(jobPosting.title).trim();
+      if (!company) {
+        const org = jobPosting.hiringOrganization;
+        if (org && (org.name || org['@name'])) company = String(org.name || org['@name']).trim();
+      }
+      if (!location) {
+        const locObj = jobPosting.jobLocation || jobPosting.jobLocationType || jobPosting.applicantLocationRequirements;
+        const first = Array.isArray(locObj) ? locObj[0] : locObj;
+        const addr = first && (first.address || first.jobLocation || first);
+        const parts = [addr?.addressLocality, addr?.addressRegion, addr?.addressCountry].filter(Boolean);
+        if (parts.length) location = parts.join(', ');
+      }
+    }
+  }
+
+  const currentUrl = window.location?.href || document.location?.href || '';
+  return { title, company, location, currentUrl };
+}
+
 
   (function tryRead(tries){
     const { title, company, location, currentUrl } = readFields();
@@ -356,6 +412,19 @@ const code = `(function(){
     }
   };
 })();
+
+// Build a simple "peek" bookmarklet that just shows what it will capture
+(function makePeek(){
+  const peekCode = `(function(){
+    function t(s){return document.querySelector(s)?.innerText?.trim()||'';}
+    const jobTitle = t('h1, h1[data-test-id="job-title"], h1.jobs-unified-top-card__job-title');
+    const jobCompany = t('a.topcard__org-name-link, [data-test-id="company-name"], .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
+    const jobLoc = t('[data-test-id="job-location"], .jobs-unified-top-card__bullet, .top-card-layout__second-subline span');
+    alert('Title: ' + jobTitle + '\\nCompany: ' + jobCompany + '\\nLocation: ' + jobLoc + '\\nURL: ' + (window.location && window.location.href));
+  })();`;
+  document.getElementById('bmPeek').href = 'javascript:' + peekCode.replace(/\s+/g,' ');
+})();
+
   
 </script>
 </body>
